@@ -1,4 +1,3 @@
-```markdown
 <div align="center">
 
 # 🎈 Bubble Pop Kids Game | بازی ترکاندن حباب‌ها
