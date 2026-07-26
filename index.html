@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="بازی کودکانه ترکاندن حباب‌ها - سرگرمی شاد و رنگارنگ برای کودکان">
+    <title>🎈 بازی ترکاندن حباب‌ها | بازی کودکانه</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            background: linear-gradient(180deg, #1a0533 0%, #2d1b69 25%, #5b2d8e 50%, #8e44ad 75%, #c0392b 100%);
+            user-select: none;
+        }
+
+        /* ===== ابرها ===== */
+        .cloud {
+            position: absolute;
+            background: rgba(255,255,255,0.12);
+            border-radius: 50px;
+            animation: floatCloud linear infinite;
+            pointer-events: none;
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+        .cloud::before { width: 60%; height: 130%; top: -55%; left: 15%; }
+        .cloud::after { width: 45%; height: 110%; top: -35%; right: 12%; }
+
+        @keyframes floatCloud {
+            from { transform: translateX(110vw); }
+            to { transform: translateX(-250px); }
+        }
+
+        /* ===== ستاره‌های پس‌زمینه ===== */
+        .bg-star {
+            position: absolute;
+            color: rgba(255,255,255,0.25);
+            animation: twinkle 2.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.4); }
+        }
+
+        /* ===== هدر ===== */
+        #game-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        #game-header h1 {
+            font-size: clamp(0.85rem, 3vw, 1.3rem);
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .score-box {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-icon {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+
+        /* ===== ناحیه بازی ===== */
+        #game-area {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* ===== حباب‌ها - اصلاح شده ===== */
+        .bubble-wrapper {
+            position: absolute;
+            bottom: -100px;
+            animation: floatUp linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(calc(-100vh - 200px)); }
+        }
+
+        .bubble {
+            border-radius: 50%;
+            cursor: pointer;
+            pointer-events: all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            animation: wobble 1.8s ease-in-out infinite;
+            box-shadow:
+                inset -6px -6px 15px rgba(0,0,0,0.15),
+                inset 6px 6px 15px rgba(255,255,255,0.35),
+                0 6px 25px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.08s;
+        }
+
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: 12%;
+            left: 18%;
+            width: 28%;
+            height: 28%;
+            background: rgba(255,255,255,0.55);
+            border-radius: 50%;
+            filter: blur(1px);
+        }
+
+        .bubble:active { transform: scale(0.85); }
+
+        @keyframes wobble {
+            0%, 100% { transform: translateX(0) rotate(0deg) scale(1); }
+            25% { transform: translateX(-6px) rotate(-3deg) scale(1.02); }
+            75% { transform: translateX(6px) rotate(3deg) scale(0.98); }
+        }
+
+        /* ===== افکت‌ها ===== */
+        .particle {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 300;
+            animation: particleFly 0.7s ease-out forwards;
+        }
+        @keyframes particleFly {
+            0% { transform: translate(0,0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        .float-score {
+            position: fixed;
+            pointer-events: none;
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            z-index: 300;
+            animation: floatScore 1s ease-out forwards;
+        }
+        @keyframes floatScore {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-70px) scale(1.6); opacity: 0; }
+        }
+
+        .pop-ring {
+            position: fixed;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.8);
+            pointer-events: none;
+            z-index: 299;
+            animation: ringExpand 0.4s ease-out forwards;
+        }
+        @keyframes ringExpand {
+            0% { transform: scale(0.3); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* ===== مودال‌ها ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+        }
+
+        .modal-box {
+            background: linear-gradient(145deg, #ffffff 0%, #f8f0ff 100%);
+            border-radius: 28px;
+            padding: clamp(22px, 5vw, 45px);
+            text-align: center;
+            max-width: 92vw;
+            width: 440px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.4);
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.4) translateY(30px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .modal-box h2 {
+            font-size: clamp(1.3rem, 4.5vw, 2rem);
+            color: #6c3483;
+            margin-bottom: 12px;
+        }
+
+        .modal-box p {
+            font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+            color: #444;
+            margin-bottom: 14px;
+            line-height: 2;
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            border: none;
+            padding: 14px 45px;
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(245,87,108,0.4);
+            margin-top: 8px;
+        }
+        .btn-play:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 35px rgba(245,87,108,0.5); }
+        .btn-play:active { transform: scale(0.95); }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 8px 25px rgba(118,75,162,0.4);
+        }
+
+        .final-score {
+            font-size: clamp(2.5rem, 8vw, 3.8rem);
+            color: #e74c3c;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .stars-display { font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 8px 0; }
+
+        /* ===== مودال درباره ===== */
+        .about-dedication {
+            background: linear-gradient(135deg, #fdf2f8, #fef9f0);
+            border: 2px solid #f0c27f;
+            border-radius: 16px;
+            padding: 18px;
+            margin: 15px 0;
+            text-align: right;
+        }
+
+        .about-dedication p {
+            font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+            color: #5d4037;
+            line-height: 2.2;
+            margin-bottom: 8px;
+        }
+
+        .about-dedication .ded-title {
+            text-align: center;
+            font-weight: bold;
+            color: #c0392b;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            margin-bottom: 12px;
+        }
+
+        .about-rules {
+            text-align: right;
+            background: #f0f4ff;
+            border-radius: 12px;
+            padding: 14px;
+            margin: 12px 0;
+        }
+
+        .about-rules li {
+            font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.8;
+            list-style: none;
+        }
+
+        /* ===== تایمر ===== */
+        #timer-bar {
+            position: fixed;
+            bottom: 0; left: 0;
+            height: 7px;
+            background: linear-gradient(90deg, #00f260, #0575e6, #f5576c);
+            transition: width 0.1s linear;
+            z-index: 100;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* ===== فوتر ===== */
+        #game-footer {
+            position: fixed;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+        #game-footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: clamp(0.7rem, 2vw, 0.85rem);
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            transition: all 0.3s;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        #game-footer a:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 480px) {
+            #game-header { padding: 8px 10px; }
+            .score-box { padding: 4px 10px; font-size: 0.8rem; }
+            .btn-icon { width: 32px; height: 32px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ابرها -->
+    <div class="cloud" style="width:130px;height:40px;top:12%;animation-duration:28s;"></div>
+    <div class="cloud" style="width:90px;height:30px;top:40%;animation-duration:38s;animation-delay:6s;"></div>
+    <div class="cloud" style="width:160px;height:48px;top:65%;animation-duration:32s;animation-delay:12s;"></div>
+
+    <!-- هدر -->
+    <header id="game-header">
+        <h1>🎈 حباب‌ها</h1>
+        <div class="header-btns">
+            <div class="score-box"><span>⭐</span><span id="score-display">0</span></div>
+            <div class="score-box"><span>⏱️</span><span id="time-display">30</span></div>
+            <button class="btn-icon" id="btn-about" title="درباره بازی">ℹ️</button>
+        </div>
+    </header>
+
+    <!-- ناحیه بازی -->
+    <div id="game-area"></div>
+
+    <!-- نوار تایمر -->
+    <div id="timer-bar" style="width:100%"></div>
+
+    <!-- ===== صفحه شروع ===== -->
+    <div class="modal-overlay" id="start-screen">
+        <div class="modal-box">
+            <h2>🎈 بازی حباب‌ها 🎈</h2>
+            <p>حباب‌های رنگارنگ رو بترکون و امتیاز بگیر!</p>
+            <ul class="about-rules">
+                <li>🎈 هر حباب رنگی = <b>۱۰ امتیاز</b></li>
+                <li>🌟 حباب طلایی = <b>۵۰ امتیاز</b></li>
+                <li>⏱️ فقط <b>۳۰ ثانیه</b> وقت داری!</li>
+                <li>👆 با انگشت یا ماوس بترکون!</li>
+            </ul>
+            <button class="btn-play" id="btn-start">🚀 شروع بازی</button>
+        </div>
+    </div>
+
+    <!-- ===== صفحه پایان ===== -->
+    <div class="modal-overlay hidden" id="game-over-screen">
+        <div class="modal-box">
+            <h2>🎉 وقت تمام شد! 🎉</h2>
+            <div class="stars-display" id="stars-display"></div>
+            <p>امتیاز تو:</p>
+            <div class="final-score" id="final-score">0</div>
+            <p id="result-message"></p>
+            <button class="btn-play" id="btn-restart">🔄 بازی دوباره</button>
+        </div>
+    </div>
+
+    <!-- ===== مودال درباره بازی ===== -->
+    <div class="modal-overlay hidden" id="about-screen">
+        <div class="modal-box">
+            <h2>ℹ️ درباره بازی</h2>
+            <p>
+                «ترکاندن حباب‌ها» یک بازی ساده، شاد و رایگان برای کودکان است.
+                هدف بازی، تقویت هماهنگی چشم و دست، سرعت عمل و شادی بچه‌هاست.
+            </p>
+
+            <div class="about-dedication">
+                <p class="ded-title">🕊️ تقدیم با عشق و احترام 🕊️</p>
+                <p>
+                    این بازی کوچک را تقدیم می‌کنیم به یاد تمام کودکان شهیدی که در جنگ تحمیلیِ
+                    رژیم آمریکایی-صهیونیستی علیه ایران، آسمانی شدند؛
+                    کودکانی که هرگز فرصت بازی کردن، خندیدن و بزرگ شدن را نیافتند.
+                </p>
+                <p>
+                    به‌ویژه تقدیم به <b>دانش‌آموزان شهید میناب</b>؛
+                    بچه‌هایی که کیف و کتابشان را زمین گذاشتند و بال‌هایشان را به آسمان سپردند.
+                    یادشان گرامی، نامشان جاودان، و راهشان روشن باد.
+                </p>
+                <p style="text-align:center; margin-bottom:0;">
+                    🌷 شادیِ امروز بچه‌ها، مدیونِ دیروزِ آن‌هاست 🌷
+                </p>
+            </div>
+
+            <button class="btn-play btn-secondary" id="btn-close-about">بستن ✕</button>
+        </div>
+    </div>
+
+    <!-- فوتر -->
+    <footer id="game-footer">
+        <a href="https://intellsoft.ir"
+           title="اینتل‌سافت | طراحی و توسعه بازی و نرم‌افزار هوشمند"
+           rel="noopener"
+           target="_blank">
+            🚀 اینتل‌سافت | ساخت بازی و نرم‌افزار هوشمند
+        </a>
+    </footer>
+
+    <script>
+    // ===== موتور صدا =====
+    class SoundEngine {
+        constructor() { this.ctx = null; }
+
+        init() {
+            if (this.ctx) return;
+            try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch(e) {}
+        }
+
+        play(freq, type, dur, vol, delay = 0) {
+            if (!this.ctx) return;
+            const t = this.ctx.currentTime + delay;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(vol, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+            osc.start(t);
+            osc.stop(t + dur);
+        }
+
+        pop(pitch) {
+            this.play(500 * pitch, 'sine', 0.15, 0.25);
+            this.play(900 * pitch, 'sine', 0.08, 0.15, 0.02);
+        }
+
+        golden() {
+            [523, 659, 784, 1047, 1319].forEach((f, i) => {
+                this.play(f, 'triangle', 0.3, 0.18, i * 0.07);
+            });
+        }
+
+        start() {
+            [262, 330, 392, 523].forEach((f, i) => {
+                this.play(f, 'square', 0.2, 0.12, i * 0.1);
+            });
+        }
+
+        end() {
+            [523, 440, 349, 262].forEach((f, i) => {
+                this.play(f, 'sine', 0.4, 0.15, i * 0.2);
+            });
+        }
+    }
+
+    // ===== متغیرها =====
+    const sound = new SoundEngine();
+    const gameArea = document.getElementById('game-area');
+    const scoreDisplay = document.getElementById('score-display');
+    const timeDisplay = document.getElementById('time-display');
+    const timerBar = document.getElementById('timer-bar');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const aboutScreen = document.getElementById('about-screen');
+
+    let score = 0, timeLeft = 30, isPlaying = false;
+    let spawnInterval = null, timerInterval = null;
+
+    const emojis = ['🎈','🌈','🦋','🌸','🐱','🐶','🍭','🎀','🐠','🦄','🍩','🌺','🐝','🍓'];
+    const colors = [
+        'radial-gradient(circle at 30% 30%, #ff9a9e, #f5576c)',
+        'radial-gradient(circle at 30% 30%, #a18cd1, #764ba2)',
+        'radial-gradient(circle at 30% 30%, #fbc2eb, #a6c1ee)',
+        'radial-gradient(circle at 30% 30%, #84fab0, #8fd3f4)',
+        'radial-gradient(circle at 30% 30%, #ffecd2, #fcb69f)',
+        'radial-gradient(circle at 30% 30%, #a1c4fd, #c2e9fb)',
+        'radial-gradient(circle at 30% 30%, #f6d365, #fda085)',
+        'radial-gradient(circle at 30% 30%, #89f7fe, #66a6ff)',
+        'radial-gradient(circle at 30% 30%, #fdcbf1, #e6dee9)',
+    ];
+
+    // ===== ساخت حباب =====
+    function createBubble() {
+        if (!isPlaying) return;
+
+        const isGolden = Math.random() < 0.12;
+        const size = isGolden ? rand(55, 80) : rand(45, 85);
+        const x = rand(10, window.innerWidth - size - 10);
+        const duration = rand(4, 7);
+
+        // wrapper برای انیمیشن بالا رفتن
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bubble-wrapper';
+        wrapper.style.left = x + 'px';
+        wrapper.style.animationDuration = duration + 's';
+
+        // حباب اصلی برای انیمیشن wobble
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.style.width = size + 'px';
+        bubble.style.height = size + 'px';
+
+        if (isGolden) {
+            bubble.style.background = 'radial-gradient(circle at 30% 30%, #fff7ad, #ffd700, #ff8c00)';
+            bubble.style.boxShadow = '0 0 25px rgba(255,215,0,0.7), inset -5px -5px 12px rgba(0,0,0,0.1)';
+            bubble.textContent = '🌟';
+            bubble.dataset.points = '50';
+            bubble.dataset.golden = '1';
+        } else {
+            bubble.style.background = colors[Math.floor(Math.random() * colors.length)];
+            bubble.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            bubble.dataset.points = '10';
+        }
+
+        bubble.addEventListener('pointerdown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            popBubble(this, wrapper);
+        });
+
+        wrapper.appendChild(bubble);
+        gameArea.appendChild(wrapper);
+
+        // حذف بعد از اتمام انیمیشن
+        setTimeout(() => { if (wrapper.parentNode) wrapper.remove(); }, duration * 1000 + 100);
+    }
+
+    // ===== ترکاندن =====
+    function popBubble(bubble, wrapper) {
+        if (!isPlaying) return;
+
+        const rect = bubble.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const pts = parseInt(bubble.dataset.points);
+        const isGolden = bubble.dataset.golden === '1';
+
+        score += pts;
+        scoreDisplay.textContent = score;
+
+        if (isGolden) sound.golden();
+        else sound.pop(0.7 + Math.random() * 0.8);
+
+        createParticles(cx, cy, isGolden);
+        createRing(cx, cy, rect.width);
+        showFloatScore(cx, cy, pts, isGolden);
+
+        wrapper.remove();
+    }
+
+    function createParticles(x, y, golden) {
+        const cols = golden
+            ? ['#FFD700','#FFA500','#FF6347','#FFFF00','#fff']
+            : ['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#00d2d3'];
+        const count = golden ? 18 : 12;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.background = cols[i % cols.length];
+            p.style.width = p.style.height = rand(6, 12) + 'px';
+            const angle = (Math.PI * 2 * i) / count;
+            const dist = rand(35, 75);
+            p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+            p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 700);
+        }
+    }
+
+    function createRing(x, y, size) {
+        const ring = document.createElement('div');
+        ring.className = 'pop-ring';
+        ring.style.left = (x - size/2) + 'px';
+        ring.style.top = (y - size/2) + 'px';
+        ring.style.width = ring.style.height = size + 'px';
+        document.body.appendChild(ring);
+        setTimeout(() => ring.remove(), 400);
+    }
+
+    function showFloatScore(x, y, pts, golden) {
+        const el = document.createElement('div');
+        el.className = 'float-score';
+        el.textContent = '+' + pts;
+        el.style.left = x + 'px';
+        el.style.top = (y - 20) + 'px';
+        if (golden) { el.style.fontSize = '2.2rem'; el.style.color = '#FFD700'; }
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    // ===== شروع / پایان =====
+    function startGame() {
+        sound.init();
+        sound.start();
+        score = 0; timeLeft = 30; isPlaying = true;
+        scoreDisplay.textContent = '0';
+        timeDisplay.textContent = '30';
+        timerBar.style.width = '100%';
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        aboutScreen.classList.add('hidden');
+        gameArea.innerHTML = '';
+
+        spawnInterval = setInterval(createBubble, 600);
+        // چند حباب اولیه فوری
+        setTimeout(createBubble, 100);
+        setTimeout(createBubble, 300);
+        setTimeout(createBubble, 500);
+
+        const t0 = Date.now();
+        timerInterval = setInterval(() => {
+            const elapsed = (Date.now() - t0) / 1000;
+            timeLeft = Math.max(0, 30 - elapsed);
+            timeDisplay.textContent = Math.ceil(timeLeft);
+            timerBar.style.width = (timeLeft / 30 * 100) + '%';
+            if (timeLeft <= 0) endGame();
+        }, 100);
+    }
+
+    function endGame() {
+        isPlaying = false;
+        clearInterval(spawnInterval);
+        clearInterval(timerInterval);
+        sound.end();
+        gameArea.innerHTML = '';
+
+        document.getElementById('final-score').textContent = score;
+        let stars, msg;
+        if (score >= 500) { stars = '⭐⭐⭐⭐⭐'; msg = 'فوق‌العاده! تو یه قهرمانی! 🏆'; }
+        else if (score >= 350) { stars = '⭐⭐⭐⭐'; msg = 'عالی بود! دستت درد نکنه! 🎉'; }
+        else if (score >= 200) { stars = '⭐⭐⭐'; msg = 'آفرین! خیلی خوب بود! 👏'; }
+        else if (score >= 100) { stars = '⭐⭐'; msg = 'بد نبود! بیشتر تمرین کن! 💪'; }
+        else { stars = '⭐'; msg = 'عیبی نداره! دوباره تلاش کن! 🌈'; }
+
+        document.getElementById('stars-display').textContent = stars;
+        document.getElementById('result-message').textContent = msg;
+        gameOverScreen.classList.remove('hidden');
+    }
+
+    // ===== رویدادها =====
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-restart').addEventListener('click', startGame);
+    document.getElementById('btn-about').addEventListener('click', () => {
+        aboutScreen.classList.remove('hidden');
+    });
+    document.getElementById('btn-close-about').addEventListener('click', () => {
+        aboutScreen.classList.add('hidden');
+    });
+
+    // ===== ابزار =====
+    function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    // ===== ستاره‌های پس‌زمینه =====
+    for (let i = 0; i < 20; i++) {
+        const s = document.createElement('div');
+        s.className = 'bg-star';
+        s.textContent = ['✦','✧','⋆','·'][rand(0,3)];
+        s.style.left = rand(0,100) + '%';
+        s.style.top = rand(0,100) + '%';
+        s.style.fontSize = rand(8,18) + 'px';
+        s.style.animationDelay = (Math.random()*3) + 's';
+        document.body.appendChild(s);
+    }
+
+    // جلوگیری از اسکرول موبایل
+    document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    </script>
+</body>
+</html>
